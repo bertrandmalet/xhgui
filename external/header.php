@@ -61,12 +61,20 @@ function Xhgui_recordXHProfData()
         'request_ts' => new MongoDate($_SERVER['REQUEST_TIME']),
         'request_date' => date('Y-m-d', $_SERVER['REQUEST_TIME']),
     );
-
-    try {
-        $db = Xhgui_Db::connect();
-        $profiles = new Xhgui_Profiles($db->results);
-        $profiles->insert($data, array('w' => false));
-    } catch (Exception $e) {
-        error_log('xhgui - ' . $e->getMessage());
+    
+    switch (Xhgui_Config::read('save.handler')) {
+        case 'json':
+            $file = XHGUI_ROOT_DIR.'/data/runs_'.date(Xhgui_Config::read('save.date.format')).'.json';
+            file_put_contents($file, json_encode($data)."\n", FILE_APPEND);
+            break;
+        default :
+            try {
+                $db = Xhgui_Db::connect();
+                $profiles = new Xhgui_Profiles($db->results);
+                $profiles->insert($data, array('w' => false));
+            } catch (Exception $e) {
+                error_log('xhgui - ' . $e->getMessage());
+            }
+            break;
     }
 }
